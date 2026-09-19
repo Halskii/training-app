@@ -8,7 +8,7 @@ planning, block generation, injury-feedback adjustment).
 1. Create a free [Supabase](https://supabase.com) project.
 2. In the Supabase SQL editor, run `migrations/001_init.sql`.
 3. Copy `.env.example` to `.env` and fill in:
-   - `SUPABASE_URL` / `SUPABASE_SERVICE_KEY` (Project Settings → API)
+   - `SUPABASE_URL` / `SUPABASE_SECRET_KEY` (Project Settings → API Keys — use the **secret** key here, never the publishable one)
    - `ANTHROPIC_API_KEY` (Anthropic Console)
 4. Install dependencies and run:
 
