@@ -1,0 +1,240 @@
+{
+  "macrocycle_id": "m1",
+  "coach_note": "Foundation stage of a longer road.",
+  "phase_number": 1,
+  "start_date": "2026-09-14",
+  "goal_ids": [
+    "goal-a",
+    "goal-b"
+  ],
+  "blocks": [
+    {
+      "phase": "accumulation",
+      "week_start": 1,
+      "week_end": 4,
+      "volume_trend": "high, climbing",
+      "intensity_trend": "low-to-moderate",
+      "movement_focus": [
+        "squat pattern",
+        "carry & grip work"
+      ],
+      "rationale": "Because reasons.",
+      "block_id": "00000000-0000-0000-0000-000000000001",
+      "detail": {
+        "phase": "accumulation",
+        "week_start": 1,
+        "week_end": 4,
+        "days": [
+          {
+            "day_index": 1,
+            "title": "Day 1 - Squat & Carries",
+            "warmup": [
+              {
+                "title": "Core",
+                "prescription": "1 set each",
+                "items": [
+                  "Bird Dog x10ea",
+                  "Side Plank x30sec each"
+                ],
+                "notes": "Slow and controlled"
+              }
+            ],
+            "exercises": [
+              {
+                "name": "Front Squat",
+                "group": null,
+                "cue": "3sec slow eccentric and 1sec pause at depth. Use a conservative estimate of 1RM.",
+                "weeks": [
+                  {
+                    "sets": 4,
+                    "reps": "3",
+                    "effort": "70%",
+                    "note": null
+                  },
+                  {
+                    "sets": 4,
+                    "reps": "4",
+                    "effort": "70-72%",
+                    "note": null
+                  },
+                  {
+                    "sets": 4,
+                    "reps": "5",
+                    "effort": "72-74%",
+                    "note": null
+                  },
+                  {
+                    "sets": 3,
+                    "reps": "3",
+                    "effort": "80%",
+                    "note": "Backoff 1x3 @ 90% top set"
+                  }
+                ]
+              },
+              {
+                "name": "Axle Strict Press",
+                "group": "A",
+                "cue": "Axle for press",
+                "weeks": [
+                  {
+                    "sets": 3,
+                    "reps": "5",
+                    "effort": "RPE 7",
+                    "note": null
+                  },
+                  {
+                    "sets": 4,
+                    "reps": "5",
+                    "effort": "RPE 8",
+                    "note": null
+                  },
+                  {
+                    "sets": 4,
+                    "reps": "5",
+                    "effort": "add 5-10lb",
+                    "note": null
+                  },
+                  {
+                    "sets": null,
+                    "reps": "Top set 1x5",
+                    "effort": "RPE 9",
+                    "note": null
+                  }
+                ]
+              },
+              {
+                "name": "Chest Supported Row",
+                "group": "A",
+                "cue": null,
+                "weeks": [
+                  {
+                    "sets": 3,
+                    "reps": "8",
+                    "effort": "RPE 7",
+                    "note": null
+                  },
+                  {
+                    "sets": 4,
+                    "reps": "8",
+                    "effort": "RPE 8",
+                    "note": null
+                  },
+                  {
+                    "sets": 4,
+                    "reps": "8",
+                    "effort": "add 5-10lb",
+                    "note": null
+                  },
+                  {
+                    "sets": 1,
+                    "reps": "8RM",
+                    "effort": null,
+                    "note": null
+                  }
+                ]
+              },
+              {
+                "name": "Zone 2 Cardio",
+                "group": null,
+                "cue": null,
+                "weeks": [
+                  {
+                    "sets": null,
+                    "reps": "15 min Zone 2",
+                    "effort": null,
+                    "note": null
+                  },
+                  {
+                    "sets": null,
+                    "reps": "15 min Zone 2",
+                    "effort": null,
+                    "note": null
+                  },
+                  {
+                    "sets": null,
+                    "reps": "15 min Zone 2",
+                    "effort": null,
+                    "note": null
+                  },
+                  {
+                    "sets": null,
+                    "reps": null,
+                    "effort": null,
+                    "note": null
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "day_index": 2,
+            "title": "Day 2 - Hinge",
+            "warmup": [],
+            "exercises": [
+              {
+                "name": "Trap Bar Deadlift",
+                "group": null,
+                "cue": null,
+                "weeks": [
+                  {
+                    "sets": 3,
+                    "reps": "6",
+                    "effort": "RPE 7",
+                    "note": null
+                  },
+                  {
+                    "sets": 3,
+                    "reps": "6",
+                    "effort": "RPE 7",
+                    "note": null
+                  },
+                  {
+                    "sets": 3,
+                    "reps": "6",
+                    "effort": "RPE 7",
+                    "note": null
+                  },
+                  {
+                    "sets": 3,
+                    "reps": "6",
+                    "effort": "RPE 7",
+                    "note": null
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "coach_note": "Build the engine."
+      }
+    },
+    {
+      "phase": "intensification",
+      "week_start": 5,
+      "week_end": 8,
+      "volume_trend": "high, climbing",
+      "intensity_trend": "low-to-moderate",
+      "movement_focus": [
+        "squat pattern",
+        "carry & grip work"
+      ],
+      "rationale": "Because reasons.",
+      "block_id": "00000000-0000-0000-0000-000000000002",
+      "detail": null
+    },
+    {
+      "phase": "realization",
+      "week_start": 9,
+      "week_end": 12,
+      "volume_trend": "high, climbing",
+      "intensity_trend": "low-to-moderate",
+      "movement_focus": [
+        "squat pattern",
+        "carry & grip work"
+      ],
+      "rationale": "Because reasons.",
+      "block_id": "00000000-0000-0000-0000-000000000003",
+      "detail": null
+    }
+  ]
+}

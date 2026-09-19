@@ -3,7 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'config.dart';
 import 'screens/auth_screen.dart';
-import 'screens/home_screen.dart';
+import 'screens/main_shell.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -32,7 +32,7 @@ class TrainingApp extends StatelessWidget {
         stream: Supabase.instance.client.auth.onAuthStateChange,
         builder: (context, _) {
           final session = Supabase.instance.client.auth.currentSession;
-          return session == null ? const AuthScreen() : const HomeScreen();
+          return session == null ? const AuthScreen() : const MainShell();
         },
       ),
     );
