@@ -56,7 +56,7 @@ class _MainShellState extends State<MainShell> {
             state: _state,
             onSetGoal: () => setState(() => _index = _goalsTab),
           ),
-          const CoachScreen(),
+          CoachScreen(state: _state),
           ProfileScreen(state: _state),
         ],
       ),

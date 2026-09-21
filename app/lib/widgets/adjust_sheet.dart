@@ -11,6 +11,8 @@ Future<bool?> showAdjustSheet(
   required Block block,
   required int blockNumber,
   required int completedWeeks,
+  String? initialRequest,
+  bool initialIsInjury = true,
 }) {
   return showModalBottomSheet<bool>(
     context: context,
@@ -22,6 +24,8 @@ Future<bool?> showAdjustSheet(
       block: block,
       blockNumber: blockNumber,
       completedWeeks: completedWeeks,
+      initialRequest: initialRequest,
+      initialIsInjury: initialIsInjury,
     ),
   );
 }
@@ -33,12 +37,16 @@ class _AdjustSheet extends StatefulWidget {
   final Block block;
   final int blockNumber;
   final int completedWeeks;
+  final String? initialRequest;
+  final bool initialIsInjury;
 
   const _AdjustSheet({
     required this.state,
     required this.block,
     required this.blockNumber,
     required this.completedWeeks,
+    required this.initialRequest,
+    required this.initialIsInjury,
   });
 
   @override
@@ -46,9 +54,9 @@ class _AdjustSheet extends StatefulWidget {
 }
 
 class _AdjustSheetState extends State<_AdjustSheet> {
-  final _request = TextEditingController();
+  late final _request = TextEditingController(text: widget.initialRequest ?? '');
   _Stage _stage = _Stage.input;
-  bool _isInjury = true;
+  late bool _isInjury = widget.initialIsInjury;
   bool _applying = false;
   String? _error;
   AdjustProposal? _proposal;

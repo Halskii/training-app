@@ -16,11 +16,61 @@ class AppState extends ChangeNotifier {
   String? blockError;
   final Set<String> _building = {};
 
+  List<ChatMessage> chat = [];
+  bool chatSending = false;
+  String? chatError;
+
   bool isBuilding(String blockId) => _building.contains(blockId);
+
+  Future<void> loadChat() async {
+    try {
+      chat = await api.chatMessages();
+      chatError = null;
+    } catch (e) {
+      chatError = e.toString();
+    }
+    notifyListeners();
+  }
+
+  /// Sends a message to the coach. The athlete's message shows immediately; if the
+  /// coach can't be reached it is removed again and false is returned so the screen
+  /// can put the text back in the input box.
+  Future<bool> sendChat(String text) async {
+    final pending = ChatMessage.pending(text);
+    chat = [...chat, pending];
+    chatSending = true;
+    chatError = null;
+    notifyListeners();
+    try {
+      final (user, coach) = await api.sendChat(text, DateTime.now());
+      chat = [...chat.where((m) => m.id != pending.id), user, coach];
+      return true;
+    } catch (e) {
+      chat = chat.where((m) => m.id != pending.id).toList();
+      chatError = e.toString();
+      return false;
+    } finally {
+      chatSending = false;
+      notifyListeners();
+    }
+  }
+
+  void dismissChatError() {
+    chatError = null;
+    notifyListeners();
+  }
+
+  Future<void> clearChat() async {
+    await api.clearChat();
+    chat = [];
+    chatError = null;
+    notifyListeners();
+  }
 
   Future<void> load() async {
     loading = true;
     notifyListeners();
+    unawaited(loadChat());
     try {
       final planFuture = api.latestMacrocycle();
       final athleteFuture = api.athlete();

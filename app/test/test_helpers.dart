@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -39,6 +40,20 @@ Athlete makeAthlete({
       'injury_flags': injuries ?? [],
     });
 
+ChatMessage chatMessage(
+  String role,
+  String content, {
+  List<Map<String, dynamic>> actions = const [],
+  String? id,
+}) =>
+    ChatMessage.fromJson({
+      'id': id ?? 'm-${content.hashCode}',
+      'role': role,
+      'content': content,
+      'actions': actions,
+      'created_at': '2026-09-30T10:00:00Z',
+    });
+
 /// AppState that never touches the network: it records calls and applies changes in memory.
 class TestState extends AppState {
   final json = fixtureJson();
@@ -60,6 +75,47 @@ class TestState extends AppState {
     loading = false;
     plan = loadPlan();
     athlete = makeAthlete();
+  }
+
+  // --- chat ---
+  final sentChats = <String>[];
+  int clearCalls = 0;
+  bool failChat = false;
+  Completer<void>? holdChat; // keeps the coach's reply pending until completed
+  String coachReplyText = 'Sounds good.';
+  List<Map<String, dynamic>> coachReplyActions = [];
+  int _chatSeq = 0;
+
+  @override
+  Future<bool> sendChat(String text) async {
+    sentChats.add(text);
+    final pending = ChatMessage.pending(text);
+    chat = [...chat, pending];
+    chatSending = true;
+    chatError = null;
+    notifyListeners();
+    if (holdChat != null) await holdChat!.future;
+    chatSending = false;
+    chat = chat.where((m) => m.id != pending.id).toList();
+    if (failChat) {
+      chatError = 'Could not reach your coach';
+      notifyListeners();
+      return false;
+    }
+    chat = [
+      ...chat,
+      chatMessage('user', text, id: 'u${_chatSeq++}'),
+      chatMessage('coach', coachReplyText, actions: coachReplyActions, id: 'c${_chatSeq++}'),
+    ];
+    notifyListeners();
+    return true;
+  }
+
+  @override
+  Future<void> clearChat() async {
+    clearCalls++;
+    chat = [];
+    notifyListeners();
   }
 
   final builds = <String>[];

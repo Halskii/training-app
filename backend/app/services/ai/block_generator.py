@@ -82,6 +82,10 @@ exercise selections and conservative progression; seasoned athletes can take \
 more specificity and intensity.
 - Respect active injury flags: avoid or substitute movements likely to \
 aggravate them, and mention how you adjusted in coach_note.
+- recent_feedback in the athlete file holds notes the athlete shared with their \
+coach in chat, newest first (how sessions felt, lifts that stalled, pain, \
+schedule or equipment limits, preferences). Let them shape exercise selection \
+and loading, and mention in coach_note when you acted on one.
 - If the athlete's goal involves strongman or another implement sport, work in \
 carries, sandbag, or implement work appropriate to their level.
 - If a prior block summary is provided, keep useful movements for continuity, \
@@ -93,7 +97,7 @@ block (what it builds, what to watch for, injury adjustments). Always include it
 """
 
 
-def _fmt(rx: WeekPrescription) -> str:
+def format_rx(rx: WeekPrescription) -> str:
     if rx.sets and rx.reps:
         scheme = f"{rx.sets}x{rx.reps}"
     else:
@@ -108,7 +112,7 @@ def summarize_block(detail: DetailedBlock) -> str:
         lines.append(f"{day.title}:")
         for ex in day.exercises:
             if ex.weeks:
-                first, last = _fmt(ex.weeks[0]), _fmt(ex.weeks[-1])
+                first, last = format_rx(ex.weeks[0]), format_rx(ex.weeks[-1])
                 lines.append(f"  - {ex.name}: week 1 {first} -> last week {last}")
     return "\n".join(lines)
 

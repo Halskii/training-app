@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'config.dart';
+import 'format.dart';
 
 /// One exercise's prescription for one week (one cell of the program sheet).
 class WeekRx {
@@ -187,6 +188,52 @@ class Macrocycle {
   }
 
   bool isComplete(DateTime now) => currentWeek(now) > totalWeeks;
+
+  /// How many of [block]'s weeks are already over on [now] (the current week counts as still open).
+  int completedWeeks(Block block, DateTime now) =>
+      (currentWeek(now) - block.weekStart).clamp(0, block.numWeeks);
+}
+
+/// Something the coach did or offered alongside a chat reply.
+class ChatAction {
+  static const feedbackSaved = 'feedback_saved';
+  static const adjustSuggestion = 'adjust_suggestion';
+
+  final String type;
+  final String? content; // feedback_saved: the note
+  final String? blockId; // adjust_suggestion
+  final int? blockNumber;
+  final String? request;
+  final bool isInjury;
+
+  ChatAction.fromJson(Map<String, dynamic> j)
+      : type = j['type'],
+        content = j['content'] as String?,
+        blockId = j['block_id'] as String?,
+        blockNumber = (j['block_number'] as num?)?.toInt(),
+        request = j['request'] as String?,
+        isInjury = j['is_injury'] == true;
+}
+
+class ChatMessage {
+  final String id;
+  final bool fromCoach;
+  final String content;
+  final List<ChatAction> actions;
+
+  ChatMessage.fromJson(Map<String, dynamic> j)
+      : id = j['id'],
+        fromCoach = j['role'] == 'coach',
+        content = j['content'],
+        actions = (j['actions'] as List? ?? [])
+            .map((a) => ChatAction.fromJson(a as Map<String, dynamic>))
+            .toList();
+
+  /// A message the athlete just typed, shown before the server has confirmed it.
+  ChatMessage.pending(this.content)
+      : id = 'pending-${DateTime.now().microsecondsSinceEpoch}',
+        fromCoach = false,
+        actions = const [];
 }
 
 class GoalItem {
@@ -336,7 +383,7 @@ class ApiClient {
       {
         'description': description,
         'kind': kind,
-        'target_date': targetDate?.toIso8601String().substring(0, 10),
+        'target_date': targetDate == null ? null : isoDate(targetDate),
         'competition_events': events,
       };
 
@@ -379,6 +426,39 @@ class ApiClient {
   Future<void> resolveInjury(String id) async {
     final res = await http
         .post(_uri('/athlete/injuries/$id/resolve'), headers: _headers)
+        .timeout(const Duration(seconds: 30));
+    _json(res);
+  }
+
+  Future<List<ChatMessage>> chatMessages() async {
+    final res = await http
+        .get(_uri('/coach/messages?limit=100'), headers: _headers)
+        .timeout(const Duration(seconds: 30));
+    if (res.statusCode != 200) throw ApiException.from(res);
+    return (jsonDecode(res.body) as List)
+        .map((m) => ChatMessage.fromJson(m as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// Sends a message and returns (the saved athlete message, the coach's reply).
+  Future<(ChatMessage, ChatMessage)> sendChat(String message, DateTime today) async {
+    final res = await http
+        .post(
+          _uri('/coach/messages'),
+          headers: _headers,
+          body: jsonEncode({'message': message, 'today': isoDate(today)}),
+        )
+        .timeout(const Duration(seconds: 120));
+    final j = _json(res);
+    return (
+      ChatMessage.fromJson(j['user_message'] as Map<String, dynamic>),
+      ChatMessage.fromJson(j['coach_message'] as Map<String, dynamic>),
+    );
+  }
+
+  Future<void> clearChat() async {
+    final res = await http
+        .delete(_uri('/coach/messages'), headers: _headers)
         .timeout(const Duration(seconds: 30));
     _json(res);
   }

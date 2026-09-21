@@ -8,15 +8,25 @@ from app.auth import current_user_id
 from app.db import get_supabase
 from app.schemas.athlete_file import MAX_TRAINING_DAYS, MIN_TRAINING_DAYS
 from app.schemas.block import AdjustProposal, DetailedBlock
-from app.schemas.macrocycle import BlockSkeleton, MacrocycleSkeleton
+from app.schemas.macrocycle import MacrocycleSkeleton
 from app.services import athlete_file_store
 from app.services.ai.block_adjuster import adjust_block
 from app.services.ai.block_generator import generate_block, summarize_block
 from app.services.ai.macrocycle_planner import plan_macrocycle
+from app.services.program_store import (
+    BlockView,
+    MacrocycleView,
+    block_view,
+    latest_macro_row,
+    macrocycle_view,
+    owned_block,
+    sorted_block_rows,
+    summarize_macrocycle,
+)
 
 router = APIRouter(prefix="/programs", tags=["programs"])
 
-MAX_DAYS = 7
+MAX_DAYS = MAX_TRAINING_DAYS
 MAX_EXERCISES_PER_DAY = 30
 MAX_WEEKS = 8
 
@@ -35,99 +45,6 @@ class AdjustRequest(BaseModel):
     request: str = Field(min_length=1, max_length=2000)
     is_injury: bool = True
     completed_weeks: int = Field(default=0, ge=0, le=MAX_WEEKS)
-
-
-class BlockView(BlockSkeleton):
-    block_id: str
-    detail: DetailedBlock | None = None
-
-
-class MacrocycleView(BaseModel):
-    macrocycle_id: str
-    coach_note: str = ""
-    phase_number: int = 1
-    start_date: str | None = None
-    goal_ids: list[str] = []
-    blocks: list[BlockView]
-
-
-def _sorted_block_rows(macrocycle_id: str) -> list[dict]:
-    rows = (
-        get_supabase()
-        .table("blocks")
-        .select("*")
-        .eq("macrocycle_id", macrocycle_id)
-        .execute()
-        .data
-    )
-    return sorted(rows, key=lambda r: r["week_start"])
-
-
-def _block_view(skeleton: BlockSkeleton, row: dict) -> BlockView:
-    detail = DetailedBlock.model_validate(row["detail"]) if row.get("detail") else None
-    return BlockView(**skeleton.model_dump(), block_id=row["id"], detail=detail)
-
-
-def _macrocycle_view(macro_row: dict, block_rows: list[dict]) -> MacrocycleView:
-    skeleton = MacrocycleSkeleton.model_validate(macro_row["skeleton"])
-    return MacrocycleView(
-        macrocycle_id=macro_row["id"],
-        coach_note=skeleton.coach_note,
-        phase_number=macro_row.get("phase_number") or 1,
-        start_date=macro_row.get("start_date"),
-        goal_ids=macro_row.get("goal_ids") or [],
-        blocks=[_block_view(sk, row) for sk, row in zip(skeleton.blocks, block_rows)],
-    )
-
-
-def _latest_macro_row(user_id: str) -> dict | None:
-    rows = (
-        get_supabase()
-        .table("macrocycles")
-        .select("*")
-        .eq("user_id", user_id)
-        .order("created_at", desc=True)
-        .limit(1)
-        .execute()
-        .data
-    )
-    return rows[0] if rows else None
-
-
-def _owned_block(block_id: UUID, user_id: str) -> tuple[dict, dict, list[dict], int]:
-    """Load a block the user owns. Returns (block_row, macro_row, all_block_rows, index)."""
-    sb = get_supabase()
-    rows = sb.table("blocks").select("*").eq("id", str(block_id)).limit(1).execute().data
-    macro_rows = (
-        sb.table("macrocycles")
-        .select("*")
-        .eq("id", rows[0]["macrocycle_id"])
-        .limit(1)
-        .execute()
-        .data
-        if rows
-        else []
-    )
-    # Same 404 for "missing" and "not yours" so block ids can't be probed.
-    if not rows or not macro_rows or macro_rows[0]["user_id"] != user_id:
-        raise HTTPException(status_code=404, detail="Block not found")
-    all_rows = _sorted_block_rows(macro_rows[0]["id"])
-    index = next(i for i, r in enumerate(all_rows) if r["id"] == rows[0]["id"])
-    return rows[0], macro_rows[0], all_rows, index
-
-
-def _summarize_macrocycle(view: MacrocycleView) -> str:
-    parts = []
-    for i, b in enumerate(view.blocks, start=1):
-        if b.detail:
-            parts.append(f"Block {i}: {summarize_block(b.detail)}")
-        else:
-            parts.append(
-                f"Block {i}: {b.phase} block, weeks {b.week_start}-{b.week_end} "
-                f"(workouts were never built). Volume: {b.volume_trend}. "
-                f"Intensity: {b.intensity_trend}. Focus: {', '.join(b.movement_focus)}."
-            )
-    return "\n\n".join(parts)
 
 
 def _build_plan(
@@ -179,7 +96,7 @@ def _build_plan(
         ]
     ).execute()
 
-    return _macrocycle_view(macro, _sorted_block_rows(macro["id"]))
+    return macrocycle_view(macro, sorted_block_rows(macro["id"]))
 
 
 @router.post("/macrocycle", response_model=MacrocycleView)
@@ -195,24 +112,24 @@ def create_next_phase(
     req: PlanRequest, user_id: str = Depends(current_user_id)
 ) -> MacrocycleView:
     """Plan the next 12-week phase, building on the latest one."""
-    latest = _latest_macro_row(user_id)
+    latest = latest_macro_row(user_id)
     if latest is None:
         raise HTTPException(status_code=404, detail="No existing plan to continue from")
-    previous = _macrocycle_view(latest, _sorted_block_rows(latest["id"]))
+    previous = macrocycle_view(latest, sorted_block_rows(latest["id"]))
     return _build_plan(
         user_id,
         req,
         phase_number=(latest.get("phase_number") or 1) + 1,
-        previous_phase_summary=_summarize_macrocycle(previous),
+        previous_phase_summary=summarize_macrocycle(previous),
     )
 
 
 @router.get("/macrocycle/latest", response_model=MacrocycleView)
 def latest_macrocycle(user_id: str = Depends(current_user_id)) -> MacrocycleView:
-    row = _latest_macro_row(user_id)
+    row = latest_macro_row(user_id)
     if row is None:
         raise HTTPException(status_code=404, detail="No macrocycle yet")
-    return _macrocycle_view(row, _sorted_block_rows(row["id"]))
+    return macrocycle_view(row, sorted_block_rows(row["id"]))
 
 
 @router.post("/blocks/{block_id}/generate", response_model=BlockView)
@@ -221,7 +138,7 @@ def generate_block_detail(
     regenerate: bool = False,
     user_id: str = Depends(current_user_id),
 ) -> BlockView:
-    block_row, macro_row, all_rows, index = _owned_block(block_id, user_id)
+    block_row, macro_row, all_rows, index = owned_block(block_id, user_id)
     if block_row.get("detail") and not regenerate:
         raise HTTPException(
             status_code=409, detail="This block is already built (edits would be lost)"
@@ -247,7 +164,7 @@ def generate_block_detail(
         {"detail": detail.model_dump(mode="json"), "coach_note": detail.coach_note}
     ).eq("id", str(block_id)).execute()
 
-    return _block_view(block_skeleton, {**block_row, "detail": detail.model_dump()})
+    return block_view(block_skeleton, {**block_row, "detail": detail.model_dump()})
 
 
 @router.post("/blocks/{block_id}/adjust", response_model=AdjustProposal)
@@ -257,7 +174,7 @@ def adjust_block_detail(
     user_id: str = Depends(current_user_id),
 ) -> AdjustProposal:
     """Propose a revision of a built block. Returns a preview; nothing is saved here."""
-    block_row, macro_row, _all_rows, index = _owned_block(block_id, user_id)
+    block_row, macro_row, _all_rows, index = owned_block(block_id, user_id)
     if not block_row.get("detail"):
         raise HTTPException(
             status_code=409, detail="Build this block's workouts before adjusting them"
@@ -283,7 +200,7 @@ def save_block_detail(
     detail: DetailedBlock,
     user_id: str = Depends(current_user_id),
 ) -> BlockView:
-    block_row, macro_row, _all_rows, index = _owned_block(block_id, user_id)
+    block_row, macro_row, _all_rows, index = owned_block(block_id, user_id)
 
     if (
         len(detail.days) > MAX_DAYS
@@ -297,4 +214,4 @@ def save_block_detail(
     ).eq("id", str(block_id)).execute()
 
     skeleton = MacrocycleSkeleton.model_validate(macro_row["skeleton"])
-    return _block_view(skeleton.blocks[index], {**block_row, "detail": detail.model_dump()})
+    return block_view(skeleton.blocks[index], {**block_row, "detail": detail.model_dump()})

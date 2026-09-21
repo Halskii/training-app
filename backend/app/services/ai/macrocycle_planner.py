@@ -45,6 +45,11 @@ relevant block's rationale. You are not diagnosing anything - if the \
 description sounds serious (sharp pain, numbness, recent trauma), advise \
 seeing a medical professional before training that area.
 
+FEEDBACK: recent_feedback in the athlete file holds notes the athlete shared \
+with their coach in chat, newest first (how training felt, stalls, pain, \
+schedule or equipment limits, preferences). Let them shape the cycle and \
+mention in coach_note when you acted on one.
+
 GOALS: the athlete may have several goals (long-term, this phase, competition). \
 Plan a cycle that serves them together, prioritizing goals that have a target \
 date or are marked as this phase. If a goal has a target_date, use today's date \

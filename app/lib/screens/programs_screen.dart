@@ -230,7 +230,7 @@ class _ProgramsScreenState extends State<ProgramsScreen> {
     final blockIdx = _block.clamp(0, plan.blocks.length - 1);
     final block = plan.blocks[blockIdx];
     final detail = block.detail;
-    final completedWeeks = (rawWeek - block.weekStart).clamp(0, block.numWeeks);
+    final completedWeeks = plan.completedWeeks(block, _now());
     final currentWeekIdx = complete || blockIdx != currentBlockIdx ? null : week - block.weekStart;
 
     return [

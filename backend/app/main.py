@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.config import settings
-from app.routers import athlete, goals, programs
+from app.routers import athlete, coach, goals, programs
 
 logger = logging.getLogger("app")
 
@@ -39,6 +39,7 @@ app.add_middleware(
 app.include_router(programs.router)
 app.include_router(athlete.router)
 app.include_router(goals.router)
+app.include_router(coach.router)
 
 
 @app.get("/health")

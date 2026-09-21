@@ -8,6 +8,7 @@ def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+RECENT_FEEDBACK_LIMIT = 15
 REPORTED_INJURY_AREA = "Athlete-reported"
 NEW_INJURY_AREA = "New injury"
 
@@ -68,6 +69,18 @@ def add_injury(user_id: str, note: str) -> None:
         return
     sb.table("injury_flags").insert(
         {"user_id": user_id, "area": NEW_INJURY_AREA, "note": note, "active": True}
+    ).execute()
+
+
+def add_feedback(user_id: str, kind: str, content: str, block_id: str | None) -> None:
+    """Save a note the athlete shared in chat. kind is 'injury' (pain) or 'note'."""
+    get_supabase().table("feedback_events").insert(
+        {
+            "user_id": user_id,
+            "block_id": block_id,
+            "kind": kind if kind in ("injury", "note") else "note",
+            "content": content.strip()[:500],
+        }
     ).execute()
 
 
@@ -190,8 +203,19 @@ def build_athlete_file(user_id: str) -> AthleteFile:
         .data
     )
 
+    feedback_rows = (
+        sb.table("feedback_events")
+        .select("*")
+        .eq("user_id", user_id)
+        .order("created_at", desc=True)
+        .limit(RECENT_FEEDBACK_LIMIT)
+        .execute()
+        .data
+    )
+
     return AthleteFile(
         user_id=user_id,
+        recent_feedback=[f["content"] for f in feedback_rows],
         training_age_years=af.get("training_age_years"),
         training_level=af.get("training_level"),
         training_days_per_week=af.get("training_days_per_week"),

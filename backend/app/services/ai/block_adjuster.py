@@ -24,6 +24,9 @@ load, range of motion or volume where that is the sensible adjustment. Keep \
 training everything else. If the description sounds serious (sharp pain, \
 numbness, recent trauma, pain at night), tell them to get it assessed by a \
 medical professional; do not diagnose.
+- recent_feedback in the athlete file holds notes the athlete shared with their \
+coach in chat (newest first). Use it for context, but only change what the \
+current request needs.
 - Equipment or preference: substitute equivalent movements.
 - Keep each day's focus intact: a replacement must fit the day it goes on (a \
 swap on a squat day stays a lower-body movement; a swap on an upper day stays \

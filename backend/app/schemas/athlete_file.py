@@ -34,6 +34,9 @@ class AthleteFile(BaseModel):
     training_days_per_week: int | None = None
     goals: list[Goal] = []
     injury_flags: list[InjuryFlag] = []
+    # Notes the athlete shared with the coach in chat (how training felt, pain,
+    # schedule or equipment limits), newest first.
+    recent_feedback: list[str] = []
     rpe_trend_notes: str | None = None
     programming_style_notes: str | None = None
     last_updated: str
