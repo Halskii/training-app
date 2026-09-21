@@ -19,3 +19,6 @@ class MacrocycleSkeleton(BaseModel):
     blocks: list[BlockSkeleton]  # exactly 3
     goal_ids: list[str]
     generated_at: str
+    # Overall coach framing shown above the blocks (e.g. how realistic the goal is
+    # for this athlete's level). Defaults to "" so older saved plans still load.
+    coach_note: str = ""
